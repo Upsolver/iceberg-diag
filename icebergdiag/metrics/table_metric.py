@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import Generic, TypeVar, Optional
+
+from icebergdiag.utils import OrderedEnum
 
 T = TypeVar('T')
 
 
-class MetricName(Enum):
+class MetricName(OrderedEnum):
     FULL_SCAN_OVERHEAD = "Full Scan Overhead"
     WORST_SCAN_OVERHEAD = "Worst Partition Scan Overhead"
     FILE_COUNT = "Number of Files"
@@ -44,7 +45,7 @@ class TableMetric(ABC, Generic[T]):
         return f"{self._calculate_improvement()-100:.2f}%" if self.improvement is not None else ""
 
     def _calculate_improvement(self) -> float:
-        return (self.before / self.after) * 100 if self.before != 0 else float('inf')
+        return (self.before / self.after) * 100 if self.after != 0 else float('inf')
 
     @staticmethod
     def create_metric(metric_name: MetricName, before_value: T, after_value: Optional[T]) -> 'TableMetric':
