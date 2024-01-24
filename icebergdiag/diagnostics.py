@@ -108,7 +108,7 @@ class TableDiagnostics:
         self.catalog = catalog
 
     def get_metrics(self) -> TableMetrics:
-        metrics = MetricsCalculator.compute_metrics(self._get_manifest_files())
+        metrics = MetricsCalculator.compute_metrics(self._get_manifest_files(), 0)
         return TableMetrics(self.table, metrics)
 
     def _load_table(self) -> IcebergTable:

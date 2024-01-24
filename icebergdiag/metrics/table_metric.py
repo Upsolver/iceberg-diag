@@ -9,12 +9,20 @@ T = TypeVar('T')
 class MetricName(OrderedEnum):
     FULL_SCAN_OVERHEAD = "Full Scan Overhead"
     WORST_SCAN_OVERHEAD = "Worst Partition Scan Overhead"
-    FILE_COUNT = "Number of Files"
-    WORST_FILE_COUNT = "Worst Partition Number of Files"
+    FILE_COUNT = "Total File Count"
+    WORST_FILE_COUNT = "Worst Partition File Count"
     AVG_FILE_SIZE = "Avg File Size"
     WORST_AVG_FILE_SIZE = "Worst Partition Avg File Size"
     TOTAL_TABLE_SIZE = "Total Table Size"
     LARGEST_PARTITION_SIZE = "Largest Partition Size"
+    TOTAL_PARTITIONS = "Total Partitions"
+
+
+class MetricConfig:
+    def __init__(self, metric_type, local_mode_supported, show_improvement):
+        self.metric_type = metric_type
+        self.local_mode_supported = local_mode_supported
+        self.show_improvement = show_improvement
 
 
 class TableMetric(ABC, Generic[T]):
@@ -27,11 +35,18 @@ class TableMetric(ABC, Generic[T]):
         after (Optional[T]): The value of the metric after the operation.
         improvement (Optional[float]): The calculated improvement.
     """
-    def __init__(self, name: MetricName, before: T, after: Optional[T] = None):
+
+    def __init__(self, name: MetricName,
+                 before: T,
+                 after: Optional[T] = None,
+                 display_in_local: bool = True,
+                 display_improvement: bool = True):
         self.name = name
         self.before = before
         self.after = after
         self.improvement = self._calculate_improvement() if after is not None else None
+        self.display_in_local = display_in_local
+        self.display_improvement = display_improvement
 
     @abstractmethod
     def get_before_value(self) -> str:
@@ -42,13 +57,17 @@ class TableMetric(ABC, Generic[T]):
         pass
 
     def get_improvement_value(self) -> str:
-        return f"{self._calculate_improvement()-100:.2f}%" if self.improvement is not None else ""
+        if not self.display_improvement:
+            return ""
+        return f"{self._calculate_improvement():.2f}%" if self.improvement is not None else ""
 
     def _calculate_improvement(self) -> float:
-        return (self.before / self.after) * 100 if self.after != 0 else float('inf')
+        if self.before == 0 and self.after == 0:
+            return 0
+        return (1 - self.after / self.before) * 100 if self.before != 0 else float('inf')
 
     @staticmethod
-    def create_metric(metric_name: MetricName, before_value: T, after_value: Optional[T]) -> 'TableMetric':
+    def create_metric(metric_name: MetricName, before_value: T, after_value: Optional[T] = None) -> 'TableMetric':
         """
         Create a metric object based on the metric name.
 
@@ -60,18 +79,22 @@ class TableMetric(ABC, Generic[T]):
         Returns:
             TableMetric: An instance of a subclass of TableMetric.
         """
+
         metric_map = {
-            MetricName.FULL_SCAN_OVERHEAD: DurationMetric,
-            MetricName.WORST_SCAN_OVERHEAD: DurationMetric,
-            MetricName.FILE_COUNT: IntMetric,
-            MetricName.WORST_FILE_COUNT: IntMetric,
-            MetricName.AVG_FILE_SIZE: SizeMetric,
-            MetricName.WORST_AVG_FILE_SIZE: SizeMetric,
-            MetricName.TOTAL_TABLE_SIZE: SizeMetric,
-            MetricName.LARGEST_PARTITION_SIZE: SizeMetric,
+            MetricName.FULL_SCAN_OVERHEAD: MetricConfig(DurationMetric, True, True),
+            MetricName.WORST_SCAN_OVERHEAD: MetricConfig(DurationMetric, True, True),
+            MetricName.FILE_COUNT: MetricConfig(IntMetric, True, True),
+            MetricName.WORST_FILE_COUNT: MetricConfig(IntMetric, True, True),
+            MetricName.AVG_FILE_SIZE: MetricConfig(SizeMetric, True, False),
+            MetricName.WORST_AVG_FILE_SIZE: MetricConfig(SizeMetric, False, False),
+            MetricName.TOTAL_TABLE_SIZE: MetricConfig(SizeMetric, True, True),
+            MetricName.LARGEST_PARTITION_SIZE: MetricConfig(SizeMetric, True, True),
+            MetricName.TOTAL_PARTITIONS: MetricConfig(IntMetric, True, True)
         }
         if metric_name in metric_map:
-            return metric_map[metric_name](metric_name, before_value, after_value)
+            metric_config = metric_map[metric_name]
+            return metric_config.metric_type(metric_name, before_value, after_value,
+                                             metric_config.local_mode_supported, metric_config.show_improvement)
         else:
             raise ValueError(f"Unknown metric name: {metric_name}")
 
@@ -80,6 +103,7 @@ class IntMetric(TableMetric[int]):
     """
     Metric class for whole number values.
     """
+
     def get_before_value(self) -> str:
         return f"{self.before}"
 
@@ -91,6 +115,7 @@ class DurationMetric(TableMetric[int]):
     """
     Metric class for duration values, assumed to be in milliseconds.
     """
+
     def get_before_value(self) -> str:
         return self._format_duration(self.before)
 
@@ -111,14 +136,16 @@ class DurationMetric(TableMetric[int]):
         elif minutes > 0:
             return f"{minutes}m {int(seconds)}s"
         else:
-            formatted_seconds = f"{seconds:.2f}".rstrip('0').rstrip('.') if seconds > 0 else str(int(seconds))
-            return f"{formatted_seconds}s"
+            if seconds < 0.01:
+                return "<0.01s"
+            return f"{seconds:.2f}".rstrip('0').rstrip('.')
 
 
 class SizeMetric(TableMetric[float]):
     """
     Metric class for size values, assumed to be in bytes.
     """
+
     def get_before_value(self) -> str:
         return self._format_size(self.before)
 

@@ -15,9 +15,8 @@ class TableMetrics:
 
 
 FETCH_SIZE = 32 * 1024 * 1024
-MAX_GROUP_BYTE_SIZE = 500 * 1024 * 1024
-MAX_FILES_PER_GROUP = 500
-MILLISECONDS_PER_SCAN = 10
+MAX_GROUP_BYTE_SIZE = 750 * 1024 * 1024
+MILLISECONDS_PER_SCAN = 1
 
 
 class PartitionMetrics:
@@ -45,9 +44,11 @@ class MetricsCalculator:
     """
 
     @staticmethod
-    def compute_metrics(files: Iterable[DataFile]) -> List[TableMetric]:
+    def compute_metrics(files: Iterable[DataFile], manifest_files_count: int) -> List[TableMetric]:
         """Computes various metrics for the table."""
         metrics = {name: 0 for name in MetricName}
+        metrics[MetricName.FILE_COUNT] = manifest_files_count
+        metrics[MetricName.FULL_SCAN_OVERHEAD] = manifest_files_count * MILLISECONDS_PER_SCAN
         partition_files = defaultdict(list)
         partition_metrics = defaultdict(PartitionMetrics)
 
@@ -67,10 +68,12 @@ class MetricsCalculator:
             partition_metric.scan_overhead += overhead
             partition_files[partition].append(file)
 
-        metrics, worst_partitions = MetricsCalculator._update_avg_and_worst_metrics(metrics, partition_metrics)
-        after_metrics = MetricsCalculator._compute_after_metrics(partition_files, worst_partitions)
+        metrics[MetricName.TOTAL_PARTITIONS] = len(partition_metrics.keys())
+        metrics = MetricsCalculator._update_avg_and_worst_metrics(metrics, partition_metrics)
+        after_metrics, worst = MetricsCalculator._compute_after_and_worst_metrics(partition_files, partition_metrics)
+        all_metrics = {**metrics, **worst}
 
-        return [TableMetric.create_metric(name, value, after_metrics.get(name)) for name, value in metrics.items()]
+        return [TableMetric.create_metric(name, value, after_metrics.get(name)) for name, value in all_metrics.items()]
 
     @staticmethod
     def deterministic_repr(record: Record) -> str:
@@ -83,36 +86,34 @@ class MetricsCalculator:
     def _update_avg_and_worst_metrics(
             metrics: Dict[MetricName, int],
             partition_metrics: Dict[str, PartitionMetrics]
-    ) -> Tuple[Dict[MetricName, int], Dict[MetricName, str]]:
+    ) -> Dict[MetricName, int]:
         """
         Updates metrics with average and worst-case values based on the consolidated partition data.
         """
         total_files = metrics[MetricName.FILE_COUNT]
         metrics[MetricName.AVG_FILE_SIZE] = (metrics[MetricName.TOTAL_TABLE_SIZE] / total_files) if total_files else 0
 
-        worst_partitions_info = {
-            MetricName.WORST_FILE_COUNT: max(partition_metrics.items(), key=lambda x: x[1].file_count),
-            MetricName.WORST_SCAN_OVERHEAD: max(partition_metrics.items(), key=lambda x: x[1].scan_overhead)
-        }
-
-        metrics[MetricName.WORST_FILE_COUNT] = worst_partitions_info[MetricName.WORST_FILE_COUNT][1].file_count
-        metrics[MetricName.WORST_SCAN_OVERHEAD] = worst_partitions_info[MetricName.WORST_SCAN_OVERHEAD][1].scan_overhead
         metrics[MetricName.WORST_AVG_FILE_SIZE] = min(
             (p.average_file_size() for p in partition_metrics.values() if not p.is_empty()), default=0)
         metrics[MetricName.LARGEST_PARTITION_SIZE] = max((p.total_size for p in partition_metrics.values()), default=0)
 
-        worst_partitions = {k: v[0] for k, v in worst_partitions_info.items()}
-
-        return metrics, worst_partitions
+        return metrics
 
     @staticmethod
-    def _compute_after_metrics(partition_file_sizes: Dict[str, List[DataFile]],
-                               worst_partitions: Dict[MetricName, str]) -> Dict[MetricName, int]:
+    def _compute_after_and_worst_metrics(
+            partition_file_sizes: Dict[str, List[DataFile]],
+            partition_metrics: Dict[str, PartitionMetrics]
+    ) -> Tuple[Dict[MetricName, int], Dict[MetricName, int]]:
         """Computes metrics after partitioning."""
         after = {
             MetricName.FILE_COUNT: 0,
             MetricName.WORST_FILE_COUNT: 0,
             MetricName.FULL_SCAN_OVERHEAD: 0,
+            MetricName.WORST_SCAN_OVERHEAD: 0,
+        }
+
+        worst_partitions = {
+            MetricName.WORST_FILE_COUNT: 0,
             MetricName.WORST_SCAN_OVERHEAD: 0
         }
 
@@ -120,9 +121,10 @@ class MetricsCalculator:
         for partition, files in partition_file_sizes.items():
             data_files_sizes = [file.file_size_in_bytes for file in files if file.content == DataFileContent.DATA]
             partition_new_sizes[partition] = MetricsCalculator.build_partition_groups(data_files_sizes,
-                                                                                      MAX_GROUP_BYTE_SIZE,
-                                                                                      MAX_FILES_PER_GROUP)
+                                                                                      MAX_GROUP_BYTE_SIZE)
 
+        max_file_count_reduction = 0
+        max_file_scan_reduction = 0
         for partition_name, new_partition in partition_new_sizes.items():
             files_count = len(new_partition)
             after[MetricName.FILE_COUNT] += files_count
@@ -130,12 +132,19 @@ class MetricsCalculator:
             partition_overhead = partition_cost * MILLISECONDS_PER_SCAN
             after[MetricName.FULL_SCAN_OVERHEAD] += partition_overhead
 
-            if partition_name == worst_partitions[MetricName.WORST_FILE_COUNT]:
-                after[MetricName.WORST_FILE_COUNT] += files_count
-            if partition_name == worst_partitions[MetricName.WORST_SCAN_OVERHEAD]:
-                after[MetricName.WORST_SCAN_OVERHEAD] += partition_overhead
+            file_count_reduction = partition_metrics[partition_name].file_count - files_count
+            if file_count_reduction > max_file_count_reduction:
+                max_file_count_reduction = file_count_reduction
+                worst_partitions[MetricName.WORST_FILE_COUNT] = partition_metrics[partition_name].file_count
+                after[MetricName.WORST_FILE_COUNT] = files_count
 
-        return after
+            file_scan_reduction = partition_metrics[partition_name].scan_overhead - partition_overhead
+            if file_scan_reduction > max_file_scan_reduction:
+                max_file_scan_reduction = file_scan_reduction
+                worst_partitions[MetricName.WORST_SCAN_OVERHEAD] = partition_metrics[partition_name].scan_overhead
+                after[MetricName.WORST_SCAN_OVERHEAD] = partition_overhead
+
+        return after, worst_partitions
 
     @staticmethod
     def _create_metric_instances(before_metrics: Dict[MetricName, int],
@@ -160,15 +169,14 @@ class MetricsCalculator:
 
     @staticmethod
     def build_partition_groups(partition_files_sizes: List[int],
-                               max_bytes_per_group: int,
-                               max_files: int) -> List[List[int]]:
+                               max_bytes_per_group: int) -> List[List[int]]:
         """Builds groups of partition files based on size constraints."""
         sorted_sizes = sorted(partition_files_sizes)
         result, current_group = [], []
         current_size_bytes = 0
 
         for file_size in sorted_sizes:
-            if len(current_group) >= max_files or current_size_bytes > max_bytes_per_group:
+            if current_size_bytes > max_bytes_per_group:
                 result.append(current_group)
                 current_group = []
                 current_size_bytes = 0
