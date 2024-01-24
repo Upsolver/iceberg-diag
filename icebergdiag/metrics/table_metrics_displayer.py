@@ -15,9 +15,9 @@ class TableMetricsDisplayer:
         for table in tables:
             self.display_table_metrics(table)
 
-    def display_table_metrics(self, table: TableMetrics) -> None:
-        output_table = TableMetricsDisplayer._create_output_table(table.table_name)
-        for metric in table.metrics:
+    def display_table_metrics(self, table_metrics: TableMetrics) -> None:
+        output_table = TableMetricsDisplayer._create_output_table(table_metrics.table.full_table_name())
+        for metric in table_metrics.metrics:
             output_table.add_row(metric.name.value,
                                  metric.get_before_value(),
                                  metric.get_after_value(),

@@ -2,18 +2,17 @@ import argparse
 import logging
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from functools import partial
 from typing import List
 
 from rich import box
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, MofNCompleteColumn
-from rich.table import Table
+from rich.table import Table as RichTable
 
 from icebergdiag.diagnostics import IcebergDiagnosticsManager, IcebergDiagnosticsError
 from icebergdiag.exceptions import TableMetricsCalculationError
-from icebergdiag.metrics.table_metrics import TableMetrics
+from icebergdiag.metrics.table import Table
 from icebergdiag.metrics.table_metrics_displayer import TableMetricsDisplayer
 
 logging.basicConfig(
@@ -43,7 +42,7 @@ def stderr_print(stderr_message: str) -> None:
 def display_list(lst: List[str], heading: str) -> None:
     console = Console()
 
-    table = Table(show_header=True, box=box.SIMPLE_HEAD)
+    table = RichTable(show_header=True, box=box.SIMPLE_HEAD)
     table.add_column(heading)
     for item in lst:
         table.add_row(item)
@@ -65,10 +64,6 @@ def list_databases(diagnostics_manager: IcebergDiagnosticsManager) -> None:
     databases = diagnostics_manager.list_databases()
     display_list(databases, "Databases")
     stderr_print("Use --database to get the list of tables")
-
-
-def process_table(diagnostics_manager: IcebergDiagnosticsManager, database: str, table: str) -> TableMetrics:
-    return diagnostics_manager.calculate_metrics(database, table)
 
 
 def run_with_progress(task_function, message, *args, **kwargs):
@@ -96,7 +91,8 @@ def fetch_tables(diagnostics_manager: IcebergDiagnosticsManager, database: str, 
 
 
 def generate_table_metrics(diagnostics_manager: IcebergDiagnosticsManager, database: str, table_pattern: str) -> None:
-    tables = fetch_tables(diagnostics_manager, database, table_pattern)
+    table_names = fetch_tables(diagnostics_manager, database, table_pattern)
+    tables = [Table(database, name) for name in table_names]
     table_count = len(tables)
     failed_tables = []
     with Progress(SpinnerColumn(spinner_name="line"),
@@ -107,8 +103,7 @@ def generate_table_metrics(diagnostics_manager: IcebergDiagnosticsManager, datab
         displayer = TableMetricsDisplayer(progress.console)
         with ThreadPoolExecutor(max_workers=table_count) as executor:
             task = progress.add_task("[cyan]Processing...", total=table_count)
-            func = partial(process_table, diagnostics_manager, database)
-            futures = {executor.submit(func, table): table for table in tables}
+            futures = {executor.submit(diagnostics_manager.calculate_metrics, table): table for table in tables}
 
             for future in as_completed(futures):
                 try:

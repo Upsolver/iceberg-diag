@@ -11,12 +11,13 @@ from pyiceberg.catalog.glue import GlueCatalog
 from pyiceberg.expressions.visitors import _InclusiveMetricsEvaluator
 from pyiceberg.io import PY_IO_IMPL, FSSPEC_FILE_IO
 from pyiceberg.manifest import DataFile
-from pyiceberg.table import Table, _open_manifest, _min_data_file_sequence_number
+from pyiceberg.table import Table as IcebergTable, _open_manifest, _min_data_file_sequence_number
 from pyiceberg.typedef import KeyDefaultDict
 from pyiceberg.utils.concurrent import ExecutorFactory
 
 from icebergdiag.exceptions import ProfileNotFoundError, EndpointConnectionError, \
     IcebergDiagnosticsError, DatabaseNotFound, TableMetricsCalculationError
+from icebergdiag.metrics.table import Table
 from icebergdiag.metrics.table_metrics import TableMetrics, MetricsCalculator
 
 CATALOG_CONFIG = {PY_IO_IMPL: FSSPEC_FILE_IO}
@@ -64,11 +65,11 @@ class IcebergDiagnosticsManager:
         all_tables = self.list_tables(database)
         return fnmatch.filter(all_tables, search_pattern)
 
-    def calculate_metrics(self, database: str, table: str) -> TableMetrics:
+    def calculate_metrics(self, table: Table) -> TableMetrics:
         try:
-            return TableDiagnostics(self.catalog, database, table).get_metrics()
+            return TableDiagnostics(self.catalog, table).get_metrics()
         except Exception as e:
-            raise TableMetricsCalculationError(f"{database}.{table}", e)
+            raise TableMetricsCalculationError(table.full_table_name(), e)
 
     def _fetch_and_filter_tables(self, database: str) -> List[str]:
         next_token = None
@@ -102,16 +103,16 @@ class IcebergDiagnosticsManager:
 
 
 class TableDiagnostics:
-    def __init__(self, catalog: Catalog, database: str, table: str):
+    def __init__(self, catalog: Catalog, table: Table):
+        self.table = table
         self.catalog = catalog
-        self.full_table = f"{database}.{table}"
 
     def get_metrics(self) -> TableMetrics:
         metrics = MetricsCalculator.compute_metrics(self._get_manifest_files())
-        return TableMetrics(self.full_table, metrics)
+        return TableMetrics(self.table, metrics)
 
-    def _load_table(self) -> Table:
-        return self.catalog.load_table(self.full_table)
+    def _load_table(self) -> IcebergTable:
+        return self.catalog.load_table(self.table.full_table_name())
 
     def _get_manifest_files(self) -> Iterable[DataFile]:
         """Returns a list of all data files in manifest entries.

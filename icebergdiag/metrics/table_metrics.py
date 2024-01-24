@@ -4,12 +4,13 @@ from typing import Iterable, List, Dict, Tuple
 from pyiceberg.manifest import DataFile, DataFileContent
 from pyiceberg.typedef import Record
 
+from icebergdiag.metrics.table import Table
 from icebergdiag.metrics.table_metric import TableMetric, MetricName
 
 
 class TableMetrics:
-    def __init__(self, table_name: str, metrics: List[TableMetric]):
-        self.table_name = table_name
+    def __init__(self, table: Table, metrics: List[TableMetric]):
+        self.table = table
         self.metrics = metrics
 
 
