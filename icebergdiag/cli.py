@@ -1,8 +1,8 @@
 import argparse
 import logging
-import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List
+from functools import partial
+from typing import List, Callable, Any, Tuple
 
 from rich import box
 from rich.console import Console
@@ -10,10 +10,13 @@ from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, MofNCompleteColumn
 from rich.table import Table as RichTable
 
-from icebergdiag.diagnostics import IcebergDiagnosticsManager, IcebergDiagnosticsError
-from icebergdiag.exceptions import TableMetricsCalculationError
+from icebergdiag.diagnostics.manager import IcebergDiagnosticsManager
+from icebergdiag.diagnostics.requester import DiagnosticsRequester
+from icebergdiag.diagnostics.response import DiagnosticsResponse
+from icebergdiag.exceptions import TableMetricsCalculationError, IcebergDiagnosticsError
 from icebergdiag.metrics.table import Table
-from icebergdiag.metrics.table_metrics_displayer import TableMetricsDisplayer
+from icebergdiag.metrics.table_metrics import TableMetrics
+from icebergdiag.metrics.table_metrics_displayer import TableMetricsDisplayer, RunMode
 
 logging.basicConfig(
     level="ERROR",
@@ -27,7 +30,7 @@ def parse_arguments() -> argparse.Namespace:
         prog='iceberg-diag',
         description='Iceberg Diagnostics Tool')
     parser.add_argument('--profile', type=str, help='AWS profile name')
-    parser.add_argument('--region', default='us-east-1', help='AWS region')
+    parser.add_argument('--region', type=str, help='AWS region')
     parser.add_argument('--database', type=str, help='Database name')
     parser.add_argument('--table-name', type=str, help="Table name or glob pattern (e.g., '*', 'tbl_*')")
     parser.add_argument('--remote', action='store_true', help='Use remote diagnostics')
@@ -36,7 +39,7 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def stderr_print(stderr_message: str) -> None:
-    Console(file=sys.stderr).print(stderr_message, style="yellow")
+    Console(stderr=True).print(stderr_message, style="yellow")
 
 
 def display_list(lst: List[str], heading: str) -> None:
@@ -80,45 +83,85 @@ def print_table_count_message(table_count, table_pattern):
         console.print(f"[bold yellow]No tables matching the pattern '{table_pattern}' were found.[/bold yellow]\n")
     else:
         table_word = "table" if table_count == 1 else "tables"
-        console.print(f"[green]Found {table_count} {table_word}, analyzing...[/green]\n")
+        wait_message = "please allow a few minutes for the process to complete."
+        console.print(f"[green]Analyzing {table_count} {table_word}, {wait_message}[/green]\n")
 
 
 def fetch_tables(diagnostics_manager: IcebergDiagnosticsManager, database: str, table_pattern: str) -> list[str]:
     tables = run_with_progress(diagnostics_manager.get_matching_tables, "Fetching tables...",
                                database, table_pattern)
     print_table_count_message(len(tables), table_pattern)
+    if not tables:
+        exit(0)
     return tables
 
 
-def generate_table_metrics(diagnostics_manager: IcebergDiagnosticsManager, database: str, table_pattern: str) -> None:
+def process_tables(
+        diagnostics_manager: IcebergDiagnosticsManager,
+        database: str,
+        table_pattern: str,
+        metric_function: Callable[[Table], Any],
+        result_handler: Callable[[TableMetricsDisplayer, Any, List[Tuple[Table, str]]], None]
+) -> None:
     table_names = fetch_tables(diagnostics_manager, database, table_pattern)
     tables = [Table(database, name) for name in table_names]
-    table_count = len(tables)
-    failed_tables = []
+    failed_tables: List[Tuple[Table, str]] = []
+
     with Progress(SpinnerColumn(spinner_name="line"),
                   TextColumn("{task.description}"),
                   BarColumn(complete_style="progress.percentage"),
                   MofNCompleteColumn(),
                   transient=True) as progress:
         displayer = TableMetricsDisplayer(progress.console)
-        with ThreadPoolExecutor(max_workers=table_count) as executor:
-            task = progress.add_task("[cyan]Processing...", total=table_count)
-            futures = {executor.submit(diagnostics_manager.calculate_metrics, table): table for table in tables}
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            task = progress.add_task("[cyan]Processing...", total=len(tables))
+            futures = {executor.submit(metric_function, table): table for table in tables}
 
             for future in as_completed(futures):
                 try:
                     table_result = future.result()
-                    displayer.display_table_metrics(table_result)
+                    result_handler(displayer, table_result, failed_tables)
                 except TableMetricsCalculationError as e:
                     failed_tables.append((futures[future], str(e)))
-                finally:
-                    progress.update(task, advance=1)
-    stderr_print("use --remote to get size reduction calculation")
+
+                progress.update(task, advance=1)
 
     if failed_tables:
         logging.error("Failed to process the following tables:")
         for table, error in failed_tables:
             logging.error(f"Table: {table}, Error: {error}")
+
+
+def generate_table_metrics(diagnostics_manager: IcebergDiagnosticsManager, database: str, table_pattern: str) -> None:
+    def metric_function(table: Table) -> TableMetrics:
+        return diagnostics_manager.calculate_metrics(table)
+
+    def result_handler(displayer: TableMetricsDisplayer, table_result: Any, _) -> None:
+        displayer.display_table_metrics(table_result, RunMode.LOCAL)
+
+    process_tables(diagnostics_manager, database, table_pattern, metric_function, result_handler)
+
+    stderr_print(
+        "For a comprehensive analysis including all metrics and size reduction calculations, use the --remote option."
+    )
+
+
+def request_table_metrics(diagnostics_manager: IcebergDiagnosticsManager,
+                          database: str,
+                          table_pattern: str) -> None:
+    session_info = diagnostics_manager.get_session_info()
+    requester = DiagnosticsRequester()
+    func = partial(requester.request_metrics, session_info)
+
+    def metric_function(table: Table) -> DiagnosticsResponse:
+        return func([table])
+
+    def result_handler(displayer: TableMetricsDisplayer, table_result: Any,
+                       failed_tables: List[Tuple[Table, str]]) -> None:
+        displayer.display_metrics(table_result.metrics, RunMode.REMOTE)
+        failed_tables.extend(table_result.extract_errors())
+
+    process_tables(diagnostics_manager, database, table_pattern, metric_function, result_handler)
 
 
 def cli_runner() -> None:
@@ -132,6 +175,8 @@ def cli_runner() -> None:
             list_databases(diagnostics_manager)
         elif args.table_name is None:
             list_tables(diagnostics_manager, args.database)
+        elif args.remote:
+            request_table_metrics(diagnostics_manager, args.database, args.table_name)
         else:
             generate_table_metrics(diagnostics_manager, args.database, args.table_name)
 

@@ -1,18 +1,16 @@
 import fnmatch
 from itertools import chain
-from typing import List, Iterable, Dict
+from typing import List, Iterable, Dict, Any, Optional, Tuple
 
 import boto3
-import botocore.exceptions as boto3Exceptions
+import botocore.exceptions as boto3_exceptions
 from botocore.client import BaseClient
 from botocore.config import Config
 from pyiceberg.catalog import load_glue, Catalog
 from pyiceberg.catalog.glue import GlueCatalog
-from pyiceberg.expressions.visitors import _InclusiveMetricsEvaluator
 from pyiceberg.io import PY_IO_IMPL, FSSPEC_FILE_IO
 from pyiceberg.manifest import DataFile
-from pyiceberg.table import Table as IcebergTable, _open_manifest, _min_data_file_sequence_number
-from pyiceberg.typedef import KeyDefaultDict
+from pyiceberg.table import Table as IcebergTable, _open_manifest
 from pyiceberg.utils.concurrent import ExecutorFactory
 
 from icebergdiag.exceptions import ProfileNotFoundError, EndpointConnectionError, \
@@ -24,25 +22,26 @@ CATALOG_CONFIG = {PY_IO_IMPL: FSSPEC_FILE_IO}
 
 
 class IcebergDiagnosticsManager:
-    def __init__(self, profile: str, region: str):
+    def __init__(self, profile: str, region: Optional[str] = None):
         self.profile = profile
         self.region = region
         self._initialize_catalog()
 
     def _initialize_catalog(self):
         try:
-            self.validate()
+            self._validate()
             self.catalog = load_glue(name="glue",
                                      conf={"profile_name": self.profile, "region_name": self.region, **CATALOG_CONFIG})
             self.glue_client = IcebergDiagnosticsManager._get_glue_client(self.catalog)
-        except boto3Exceptions.ProfileNotFound:
+            self.session = boto3.Session(profile_name=self.profile, region_name=self.region)
+        except boto3_exceptions.ProfileNotFound:
             raise ProfileNotFoundError(self.profile)
-        except boto3Exceptions.EndpointConnectionError:
+        except boto3_exceptions.EndpointConnectionError:
             raise EndpointConnectionError(self.region)
         except Exception as e:
             raise IcebergDiagnosticsError(f"An unexpected error occurred: {e}")
 
-    def validate(self):
+    def _validate(self):
         try:
             session = boto3.Session(profile_name=self.profile, region_name=self.region)
             temp_config = Config(retries={'max_attempts': 1})
@@ -101,6 +100,19 @@ class IcebergDiagnosticsManager:
         parameters = table_properties['Parameters']
         return parameters.get('table_type') == 'ICEBERG'
 
+    def get_session_info(self) -> Dict[str, Any]:
+
+        credentials = self.session.get_credentials()
+        session_info = {
+            "accessKey": credentials.access_key,
+            "secretKey": credentials.secret_key,
+            "region": self.session.region_name,
+        }
+        if credentials.token:
+            session_info["tokenSession"] = credentials.token
+
+        return session_info
+
 
 class TableDiagnostics:
     def __init__(self, catalog: Catalog, table: Table):
@@ -108,52 +120,36 @@ class TableDiagnostics:
         self.catalog = catalog
 
     def get_metrics(self) -> TableMetrics:
-        metrics = MetricsCalculator.compute_metrics(self._get_manifest_files(), 0)
+        metrics = MetricsCalculator.compute_metrics(*self._get_manifest_files())
         return TableMetrics(self.table, metrics)
 
     def _load_table(self) -> IcebergTable:
         return self.catalog.load_table(self.table.full_table_name())
 
-    def _get_manifest_files(self) -> Iterable[DataFile]:
+    def _get_manifest_files(self) -> Tuple[Iterable[DataFile], int]:
         """Returns a list of all data files in manifest entries.
 
         Returns:
             Iterable of DataFile objects.
         """
+        def no_filter(_):
+            return True
+
         table = self._load_table()
         scan = table.scan()
         snapshot = scan.snapshot()
         if not snapshot:
-            return iter([])
+            return iter([]), 0
 
         io = table.io
-
-        manifest_evaluators = KeyDefaultDict(scan._build_manifest_evaluator)
-
-        manifests = [f for f in snapshot.manifests(io) if manifest_evaluators[f.partition_spec_id](f)]
-        min_data_sequence_number = _min_data_file_sequence_number(manifests)
-        partition_evaluators = KeyDefaultDict(scan._build_partition_evaluator)
-        metrics_evaluator = _InclusiveMetricsEvaluator(
-            table.schema(), scan.row_filter, scan.case_sensitive, scan.options.get("include_empty_files") == "true"
-        ).eval
-
+        manifests = snapshot.manifests(io)
         executor = ExecutorFactory.get_or_create()
         all_data_files = []
         for manifest_entry in chain(
                 *executor.map(
-                    lambda args: _open_manifest(*args),
-                    [
-                        (
-                                io,
-                                manifest,
-                                partition_evaluators[manifest.partition_spec_id],
-                                metrics_evaluator,
-                        )
-                        for manifest in manifests
-                        if scan._check_sequence_number(min_data_sequence_number, manifest)
-                    ],
-                )
-        ):
+                    lambda manifest: _open_manifest(io, manifest, no_filter, no_filter),
+                    manifests
+                )):
             all_data_files.append(manifest_entry.data_file)
 
-        return all_data_files
+        return all_data_files, len(snapshot.manifest_list)

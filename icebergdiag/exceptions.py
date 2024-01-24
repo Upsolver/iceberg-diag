@@ -1,3 +1,6 @@
+import requests
+
+
 class IcebergDiagnosticsError(Exception):
     """Base class for all exceptions raised by the Iceberg Diagnostics Manager."""
 
@@ -47,3 +50,11 @@ class TableMetricsCalculationError(IcebergDiagnosticsError):
         self.table = table
         self.original_exception = original_exception
         super().__init__(f"Failed to calculate metrics for table '{table}': {original_exception}")
+
+
+class RequestHandlingError(IcebergDiagnosticsError):
+    """Exception raised for errors during remote diagnostics request."""
+
+    def __init__(self, error: requests.RequestException):
+        message = f'An error occurred during the request: {error}'
+        super().__init__(message)
