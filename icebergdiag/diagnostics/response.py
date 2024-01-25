@@ -4,7 +4,7 @@ from collections import namedtuple
 from icebergdiag.metrics.table import Table
 from icebergdiag.metrics.table_metric import MetricName, TableMetric
 from icebergdiag.metrics.table_metrics import TableMetrics
-from icebergdiag.utils import NestedDictionaryAccessor
+from icebergdiag.utils import NestedDictAccessor
 
 
 def format_metrics(prefix: str, *metrics: str) -> Tuple[str, ...]:
@@ -45,7 +45,7 @@ class DiagnosticsResponse:
 
 def calculate_average_metric(metric: MetricName,
                              metric_path_prefix: str,
-                             data: NestedDictionaryAccessor) -> TableMetric:
+                             data: NestedDictAccessor) -> TableMetric:
     def calculate_average(count, size):
         return size / count if count != 0 else 0
 
@@ -62,7 +62,7 @@ def calculate_average_metric(metric: MetricName,
 def parse_response(data: Dict[str, Any]) -> DiagnosticsResponse:
     metrics = []
     for result in data['analysisResults']:
-        res = NestedDictionaryAccessor(result)
+        res = NestedDictAccessor(result)
         table = Table(*res["table.name"].split("."))
         table_metrics: list[TableMetric] = []
         for metric, metrics_path in DIAGNOSTICS_METRICS_MAP.items():
