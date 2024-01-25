@@ -3,7 +3,7 @@ from typing import Any, Dict
 from functools import total_ordering
 
 
-class NestedDictionaryAccessor:
+class NestedDictAccessor:
     """
     A utility class for accessing values in a nested dictionary using a dot-separated key.
 
@@ -15,6 +15,9 @@ class NestedDictionaryAccessor:
         self.data = data
 
     def __getitem__(self, key: str) -> Any:
+        if not isinstance(key, str):
+            raise TypeError("Key must be a string")
+
         keys = key.split('.')
         value = self.data
         for k in keys:

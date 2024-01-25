@@ -48,6 +48,9 @@ class TableMetric(ABC, Generic[T]):
         self.display_in_local = display_in_local
         self.display_improvement = display_improvement
 
+    def __eq__(self, other):
+        return self.name == other.name and self.before == other.before and self.after == self.after
+
     @abstractmethod
     def get_before_value(self) -> str:
         pass
@@ -136,9 +139,9 @@ class DurationMetric(TableMetric[int]):
         elif minutes > 0:
             return f"{minutes}m {int(seconds)}s"
         else:
-            if seconds < 0.01:
+            if 0 < seconds < 0.01:
                 return "<0.01s"
-            return f"{seconds:.2f}".rstrip('0').rstrip('.')
+            return f"{seconds:.2f}".rstrip('0').rstrip('.') + "s"
 
 
 class SizeMetric(TableMetric[float]):
