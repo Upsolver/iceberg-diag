@@ -14,7 +14,7 @@ from pyiceberg.table import Table as IcebergTable, _open_manifest
 from pyiceberg.utils.concurrent import ExecutorFactory
 
 from icebergdiag.exceptions import ProfileNotFoundError, EndpointConnectionError, \
-    IcebergDiagnosticsError, DatabaseNotFound, TableMetricsCalculationError
+    IcebergDiagnosticsError, DatabaseNotFound, TableMetricsCalculationError, SSOAuthenticationError
 from icebergdiag.metrics.table import Table
 from icebergdiag.metrics.table_metrics import TableMetrics, MetricsCalculator
 
@@ -38,6 +38,8 @@ class IcebergDiagnosticsManager:
             raise ProfileNotFoundError(self.profile)
         except boto3_exceptions.EndpointConnectionError:
             raise EndpointConnectionError(self.region)
+        except boto3_exceptions.SSOError as e:
+            raise SSOAuthenticationError(self.profile, e) from e
         except Exception as e:
             raise IcebergDiagnosticsError(f"An unexpected error occurred: {e}")
 
