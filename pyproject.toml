@@ -19,7 +19,7 @@ requests = "^2.31.0"
 rich = "^13.7.0"
 # workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
 urllib3 = ">=1.25.4,<1.27"
-pyiceberg = {extras = ["hive", "glue", "s3fs"], version = "^0.5.1"}
+pyiceberg = {extras = ["glue", "s3fs"], version = "^0.5.1"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.4"
