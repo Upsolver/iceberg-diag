@@ -4,7 +4,7 @@ class UpsolverDiag < Formula
   desc "Upsolver Iceberg Auditor CLI"
   homepage ""
   url "https://github.com/Upsolver/upsolver-diag/releases/download/0.0.1/upsolver_diag-0.1.0.tar.gz"
-  sha256 "9fe69807e5477c67998f72b11771cb046898cff35fdbe224eb3c2e0f5b0368de"
+  sha256 "41d82dea465aa8ab01f653d4b49c7028269a802b98a02afdd770d9e721c5d44b"
   license "MIT"
 
   depends_on "poetry" => :build

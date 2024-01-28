@@ -8,3 +8,6 @@ class Table:
 
     def full_table_name(self) -> str:
         return f"{self.database}.{self.table_name}"
+
+    def __str__(self):
+        return self.full_table_name()

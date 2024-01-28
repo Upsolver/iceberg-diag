@@ -1,5 +1,7 @@
 import requests
 
+from icebergdiag.metrics.table import Table
+
 
 class IcebergDiagnosticsError(Exception):
     """Base class for all exceptions raised by the Iceberg Diagnostics Manager."""
@@ -54,7 +56,7 @@ class DatabaseNotFound(IcebergDiagnosticsError):
 class TableMetricsCalculationError(IcebergDiagnosticsError):
     """Exception raised when calculating metrics failed"""
 
-    def __init__(self, table, original_exception):
+    def __init__(self, table: Table, original_exception: Exception):
         self.table = table
         self.original_exception = original_exception
         super().__init__(f"Failed to calculate metrics for table '{table}': {original_exception}")

@@ -70,7 +70,7 @@ class IcebergDiagnosticsManager:
         try:
             return TableDiagnostics(self.catalog, table).get_metrics()
         except Exception as e:
-            raise TableMetricsCalculationError(table.full_table_name(), e)
+            raise TableMetricsCalculationError(table, e)
 
     def _fetch_and_filter_tables(self, database: str) -> List[str]:
         next_token = None
@@ -154,4 +154,4 @@ class TableDiagnostics:
                 )):
             all_data_files.append(manifest_entry.data_file)
 
-        return all_data_files, len(snapshot.manifest_list)
+        return all_data_files, len(manifests)

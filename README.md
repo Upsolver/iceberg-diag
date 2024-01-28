@@ -8,12 +8,10 @@ The Iceberg Diagnostics Tool, `iceberg-diag`, is a CLI tool designed for diagnos
 
 1. Clone the repository from GitHub.
 2. Navigate to the project directory.
-3. Activate a virtual environment:
+3. Install dependencies using poetry:
 
 ```bash
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+poetry install
 ```
 
 
@@ -21,7 +19,7 @@ pip install -r requirements.txt
 For now - run it as a module with the required options.
 
 ```bash
-python -m icebergdiag.cli [options]
+poetry run upsolver-diag [options]
 ```
 
 ### Options
