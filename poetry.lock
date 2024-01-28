@@ -2,24 +2,24 @@
 
 [[package]]
 name = "aiobotocore"
-version = "2.11.0"
+version = "2.11.1"
 description = "Async client for aws services using botocore and aiohttp"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "aiobotocore-2.11.0-py3-none-any.whl", hash = "sha256:6eaf48a6ccd3943ce7d26f75dc8fa0292b7a1a069bd5a9557d37fae5adf14d2d"},
-    {file = "aiobotocore-2.11.0.tar.gz", hash = "sha256:4c5b1bf01e7aab74a29bd783159517ecf6d45b5a1647e53302e9554c064e420a"},
+    {file = "aiobotocore-2.11.1-py3-none-any.whl", hash = "sha256:904a7ad7cc8671d662cfd596906dafe839118ea2a66332c37908e3dcfdee1e45"},
+    {file = "aiobotocore-2.11.1.tar.gz", hash = "sha256:0b095af50da2d6f94e93ca959e2a4876f0f0d84d534b61b21d8e050832d04ab6"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.7.4.post0,<4.0.0"
 aioitertools = ">=0.5.1,<1.0.0"
-botocore = ">=1.33.2,<1.34.23"
+botocore = ">=1.33.2,<1.34.28"
 wrapt = ">=1.10.10,<2.0.0"
 
 [package.extras]
-awscli = ["awscli (>=1.31.2,<1.32.23)"]
-boto3 = ["boto3 (>=1.33.2,<1.34.23)"]
+awscli = ["awscli (>=1.31.2,<1.32.28)"]
+boto3 = ["boto3 (>=1.33.2,<1.34.28)"]
 
 [[package]]
 name = "aiohttp"
@@ -191,17 +191,17 @@ tests-no-zope = ["attrs[tests-mypy]", "cloudpickle", "hypothesis", "pympler", "p
 
 [[package]]
 name = "boto3"
-version = "1.34.22"
+version = "1.34.27"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "boto3-1.34.22-py3-none-any.whl", hash = "sha256:5909cd1393143576265c692e908a9ae495492c04a0ffd4bae8578adc2e44729e"},
-    {file = "boto3-1.34.22.tar.gz", hash = "sha256:a98c0b86f6044ff8314cc2361e1ef574d674318313ab5606ccb4a6651c7a3f8c"},
+    {file = "boto3-1.34.27-py3-none-any.whl", hash = "sha256:3626db4ba9fbb1b58c8fe923da5ed670873b3d881a102956ea19d3b69cd097cc"},
+    {file = "boto3-1.34.27.tar.gz", hash = "sha256:ebdd938019f3df2e7b50585353963d4553faf3fbb7b2085c440107fa6caa233b"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.22,<1.35.0"
+botocore = ">=1.34.27,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -210,13 +210,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.22"
+version = "1.34.27"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "botocore-1.34.22-py3-none-any.whl", hash = "sha256:e5f7775975b9213507fbcf846a96b7a2aec2a44fc12a44585197b014a4ab0889"},
-    {file = "botocore-1.34.22.tar.gz", hash = "sha256:c47ba4286c576150d1b6ca6df69a87b5deff3d23bd84da8bcf8431ebac3c40ba"},
+    {file = "botocore-1.34.27-py3-none-any.whl", hash = "sha256:1c10f247136ad17b6ef1588c1e043e294dbaebdebe9ce84dc56713029f515c53"},
+    {file = "botocore-1.34.27.tar.gz", hash = "sha256:a0e68ba264275b358b8c1cca604161f4d9465cf7847d73e929543a9f30ff22d1"},
 ]
 
 [package.dependencies]
@@ -918,7 +918,6 @@ rich = ">=10.11.0,<14.0.0"
 s3fs = {version = ">=2023.1.0,<2024.1.0", optional = true, markers = "extra == \"s3fs\""}
 sortedcontainers = "2.4.0"
 strictyaml = ">=1.7.0,<2.0.0"
-thrift = {version = ">=0.13.0,<1.0.0", optional = true, markers = "extra == \"hive\""}
 
 [package.extras]
 adlfs = ["adlfs (>=2023.1.0,<2024.1.0)"]
@@ -1116,24 +1115,6 @@ files = [
 python-dateutil = ">=2.6.0"
 
 [[package]]
-name = "thrift"
-version = "0.16.0"
-description = "Python bindings for the Apache Thrift RPC system"
-optional = false
-python-versions = "*"
-files = [
-    {file = "thrift-0.16.0.tar.gz", hash = "sha256:2b5b6488fcded21f9d312aa23c9ff6a0195d0f6ae26ddbd5ad9e3e25dfc14408"},
-]
-
-[package.dependencies]
-six = ">=1.7.2"
-
-[package.extras]
-all = ["tornado (>=4.0)", "twisted"]
-tornado = ["tornado (>=4.0)"]
-twisted = ["twisted"]
-
-[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -1170,6 +1151,23 @@ files = [
 brotli = ["brotli (==1.0.9)", "brotli (>=1.0.9)", "brotlicffi (>=0.8.0)", "brotlipy (>=0.6.0)"]
 secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "ipaddress", "pyOpenSSL (>=0.14)", "urllib3-secure-extra"]
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
+
+[[package]]
+name = "urllib3"
+version = "2.0.7"
+description = "HTTP library with thread-safe connection pooling, file post, and more."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "urllib3-2.0.7-py3-none-any.whl", hash = "sha256:fdb6d215c776278489906c2f8916e6e7d4f5a9b602ccbcfdf7f016fc8da0596e"},
+    {file = "urllib3-2.0.7.tar.gz", hash = "sha256:c97dfde1f7bd43a71c8d2a58e369e9b2bf692d1334ea9f9cae55add7d0dd0f84"},
+]
+
+[package.extras]
+brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
+secure = ["certifi", "cryptography (>=1.9)", "idna (>=2.0.0)", "pyopenssl (>=17.1.0)", "urllib3-secure-extra"]
+socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
+zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "wrapt"
@@ -1356,4 +1354,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "333087c3a67c4f1e40825e3929b1b5c2a1bfba9acca74ae0983058dbf393e7a1"
+content-hash = "693eebf7baea9a02e1be572cc7e0b3902012ad1e7b6d0c4745ffd0228a8a63a9"
