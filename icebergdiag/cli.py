@@ -29,7 +29,7 @@ def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='iceberg-diag',
         description='Iceberg Diagnostics Tool')
-    parser.add_argument('--profile', type=str, help='AWS profile name')
+    parser.add_argument('--profile', type=str, help='AWS profile name', default="default")
     parser.add_argument('--region', type=str, help='AWS region')
     parser.add_argument('--database', type=str, help='Database name')
     parser.add_argument('--table-name', type=str, help="Table name or glob pattern (e.g., '*', 'tbl_*')")

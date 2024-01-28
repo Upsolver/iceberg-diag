@@ -15,6 +15,14 @@ class ProfileNotFoundError(IcebergDiagnosticsError):
         super().__init__(f"The AWS profile '{profile}' does not exist.")
 
 
+class SSOAuthenticationError(IcebergDiagnosticsError):
+    """Exception raised when the SSO session is expired or invalid."""
+
+    def __init__(self, profile: str, original_exception: Exception):
+        message = f"There was an issue with the SSO for profile '{profile}': {original_exception}"
+        super().__init__(message)
+
+
 class NoRegionError(IcebergDiagnosticsError):
     """Exception raised when no AWS region is specified."""
 
