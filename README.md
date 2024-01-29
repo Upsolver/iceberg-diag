@@ -4,7 +4,33 @@
 
 The Iceberg Diagnostics Tool, `iceberg-diag`, is a CLI tool designed for diagnostic purposes related to Iceberg tables. 
 
+## Prerequisites
+
+Check if Python 3.8 or higher is installed:
+```bash
+python3 --version
+```
+Check if Rust is installed:
+```bash
+cargo --version
+```
+If Rust is not installed, install it using:
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
 ## Installation
+
+
+### Using Brew
+ ```bash
+ brew tap upsolver/upsolver-diag https://github.com/Upsolver/upsolver-diag
+brew install upsolver-diag
+ ```
+
+
+## Setup Project (dev)
+
 
 1. Clone the repository from GitHub.
 2. Navigate to the project directory.
@@ -16,9 +42,11 @@ poetry install
 
 
 ## Usage
-For now - run it as a module with the required options.
-
+If you are running with Poetry, use `Poetry run` before any command,
+If the CLI is installed, you can use the commands as is.
 ```bash
+upsolver-diag [options]
+# for poetry:
 poetry run upsolver-diag [options]
 ```
 
@@ -35,9 +63,9 @@ poetry run upsolver-diag [options]
 ### Examples
 1. Displaying help information:
     ```bash
-     python -m icebergdiag.cli --help
+     poetry run upsolver-diag --help
     ```
 2. Running diagnostics on a specific table in a specific AWS profile and region:
    ```bash
-   python -m icebergdiag.cli --profile default --region us-east-1 --database my_db --table-name '*'
+   poetry run upsolver-diag --help --profile default --region us-east-1 --database my_db --table-name '*'
     ```
