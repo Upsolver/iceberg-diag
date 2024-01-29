@@ -24,8 +24,8 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 ### Using Brew
  ```bash
- brew tap upsolver/upsolver-diag https://github.com/Upsolver/upsolver-diag
-brew install upsolver-diag
+ brew tap upsolver/iceberg-diag https://github.com/Upsolver/iceberg-diag
+brew install iceberg-diag
  ```
 
 
@@ -45,9 +45,9 @@ poetry install
 If you are running with Poetry, use `Poetry run` before any command,
 If the CLI is installed, you can use the commands as is.
 ```bash
-upsolver-diag [options]
+iceberg-diag [options]
 # for poetry:
-poetry run upsolver-diag [options]
+poetry run iceberg-diag [options]
 ```
 
 ### Options
@@ -63,9 +63,9 @@ poetry run upsolver-diag [options]
 ### Examples
 1. Displaying help information:
     ```bash
-     poetry run upsolver-diag --help
+     poetry run iceberg-diag --help
     ```
 2. Running diagnostics on a specific table in a specific AWS profile and region:
    ```bash
-   poetry run upsolver-diag --help --profile default --region us-east-1 --database my_db --table-name '*'
+   poetry run iceberg-diag --help --profile default --region us-east-1 --database my_db --table-name '*'
     ```

@@ -1,10 +1,10 @@
-class UpsolverDiag < Formula
+class IcebergDiag < Formula
   include Language::Python::Virtualenv
 
   desc "Upsolver Iceberg Auditor CLI"
   homepage ""
-  url "https://github.com/Upsolver/upsolver-diag/releases/download/0.0.1/upsolver_diag-0.1.0.tar.gz"
-  sha256 "41d82dea465aa8ab01f653d4b49c7028269a802b98a02afdd770d9e721c5d44b"
+  url "https://github.com/Upsolver/iceberg-diag/releases/download/0.0.1/iceberg_diag-0.1.0.tar.gz"
+  sha256 "baa41ecfef15ddbc507acf86e258ecd2c6ba03be22e621b2765c2e8961f8723a"
   license "MIT"
 
   depends_on "poetry" => :build
@@ -17,8 +17,8 @@ class UpsolverDiag < Formula
   end
 
   resource "aiohttp" do
-    url "https://files.pythonhosted.org/packages/54/07/9467d3f8dae29b14f423b414d9e67512a76743c5bb7686fb05fe10c9cc3e/aiohttp-3.9.1.tar.gz"
-    sha256 "8fc49a87ac269d4529da45871e2ffb6874e87779c3d0e2ccd813c0899221239d"
+    url "https://files.pythonhosted.org/packages/07/2f/27c9ae85646de72784529a86d2a98c7cfae4ff9eab0004becf47da66c7ec/aiohttp-3.9.2.tar.gz"
+    sha256 "b0ad0a5e86ce73f5368a164c10ada10504bf91869c05ab75d982c6048217fbf7"
   end
 
   resource "aioitertools" do
@@ -211,6 +211,6 @@ class UpsolverDiag < Formula
     virtualenv_install_with_resources
   end
   test do
-    system bin/"upsolver-diag", "--help"
+    system bin/"iceberg-diag", "--help"
   end
 end

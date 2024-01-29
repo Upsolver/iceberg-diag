@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "upsolver-diag"
+name = "iceberg-diag"
 version = "0.1.0"
 description = "Upsolver Iceberg Auditor CLI"
 authors = ["Upsolver <developers@upsolver.com>"]
@@ -11,7 +11,7 @@ packages = [
     ]
 
 [tool.poetry.scripts]
-upsolver-diag = 'icebergdiag.cli:cli_runner'
+iceberg-diag = 'icebergdiag.cli:cli_runner'
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
