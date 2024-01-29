@@ -1,3 +1,5 @@
+from typing import List
+
 import requests
 
 from icebergdiag.metrics.table import Table
@@ -65,6 +67,6 @@ class TableMetricsCalculationError(IcebergDiagnosticsError):
 class RequestHandlingError(IcebergDiagnosticsError):
     """Exception raised for errors during remote diagnostics request."""
 
-    def __init__(self, error: requests.RequestException):
-        message = f'An error occurred during the request: {error}'
+    def __init__(self, table_names: List[str], error: requests.RequestException):
+        message = f'An error occurred during the request for tables {table_names}: {error}'
         super().__init__(message)

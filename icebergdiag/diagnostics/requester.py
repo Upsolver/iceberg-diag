@@ -26,7 +26,7 @@ class DiagnosticsRequester:
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
-            RequestHandlingError(e)
+            raise RequestHandlingError(data["tables"], e)
 
     @staticmethod
     def _parse_response(data: Dict[str, Any]) -> DiagnosticsResponse:
