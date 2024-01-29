@@ -49,7 +49,7 @@ def calculate_average_metric(metric: MetricName,
     def calculate_average(count, size):
         return size / count if count != 0 else 0
 
-    AvgMetrics = namedtuple('AvgMetrics', ['before_count', 'before_size', 'after_count', 'after_size'])
+    AvgMetrics = namedtuple('AvgMetrics', ['before_count', 'after_count', 'before_size', 'after_size'])
 
     relevant_metrics = format_metrics(metric_path_prefix, *FILES_COUNT_METRICS, *SIZE_METRICS)
     extracted_metrics = AvgMetrics(*[data[metric_path] for metric_path in relevant_metrics])
