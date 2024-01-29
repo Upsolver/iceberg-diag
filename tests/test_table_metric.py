@@ -3,10 +3,14 @@ import pytest
 from icebergdiag.metrics.table_metric import IntMetric, DurationMetric, SizeMetric, MetricName, TableMetric
 
 
-def test_int_metric_values():
-    metric = IntMetric(MetricName.FILE_COUNT, 5, 10)
-    assert metric.get_before_value() == "5"
-    assert metric.get_after_value() == "10"
+@pytest.mark.parametrize("before, after, expected_before, expected_after", [
+    (5, 10, "5", "10"),
+    (1, 0, "1", "0")
+])
+def test_int_metric_values(before, after, expected_before, expected_after):
+    metric = IntMetric(MetricName.FILE_COUNT, before, after)
+    assert metric.get_before_value() == expected_before
+    assert metric.get_after_value() == expected_after
 
 
 @pytest.mark.parametrize("milliseconds_before, milliseconds_after, expected_before, expected_after, improvement", [

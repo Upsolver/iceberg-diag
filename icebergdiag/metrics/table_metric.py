@@ -111,7 +111,7 @@ class IntMetric(TableMetric[int]):
         return f"{self.before}"
 
     def get_after_value(self) -> str:
-        return f"{self.after or ''}"
+        return f"{self.after if self.after is not None else ''}"
 
 
 class DurationMetric(TableMetric[int]):
