@@ -24,9 +24,20 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 ### Using Brew
  ```bash
- brew tap upsolver/iceberg-diag https://github.com/Upsolver/iceberg-diag
-brew install iceberg-diag
+ brew tap upsolver/iceberg-diag
+ brew install iceberg-diag
  ```
+
+### Using PIP
+Before installing, ensure you are using `pip` version `23.1` or newer for the best compatibility and performance.
+```bash
+pip --version  # Check your current pip version
+pip install --upgrade pip  # Upgrade pip to the latest version if necessary
+```
+Install the package with `pip`
+```bash
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple iceberg-diag
+```
 
 
 ## Setup Project (dev)
@@ -42,7 +53,7 @@ poetry install
 
 
 ## Usage
-If you are running with Poetry, use `Poetry run` before any command,
+If you are running with Poetry, use `poetry run` as prefix before any command,
 If the CLI is installed, you can use the commands as is.
 ```bash
 iceberg-diag [options]
@@ -57,15 +68,15 @@ poetry run iceberg-diag [options]
 - `--region REGION`: Define the AWS region.
 - `--database DATABASE`: Set the database name.
 - `--table-name TABLE_NAME`: Enter the table name or a glob pattern (e.g., `'*'`, `'tbl_*'`).
-- `--remote`: Enable remote diagnostics.  (Note: This option is currently not supported)
+- `--remote`: Enable remote diagnostics.
 - `--no-tracking`: Disable tracking functionality. (Note: This option is currently not supported)
 
 ### Examples
 1. Displaying help information:
     ```bash
-     poetry run iceberg-diag --help
+     iceberg-diag --help
     ```
 2. Running diagnostics on a specific table in a specific AWS profile and region:
    ```bash
-   poetry run iceberg-diag --help --profile default --region us-east-1 --database my_db --table-name '*'
+    iceberg-diag --profile default --region us-east-1 --database my_db --table-name '*'
     ```
