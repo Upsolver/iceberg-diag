@@ -125,6 +125,12 @@ class DurationMetric(TableMetric[int]):
     def get_after_value(self) -> str:
         return self._format_duration(self.after) if self.after is not None else ""
 
+    def get_improvement_value(self) -> str:
+        if self.before < 10 and self.after < 10:
+            return "0.00%"
+        return super().get_improvement_value()
+
+
     @staticmethod
     def _format_duration(milliseconds: int) -> str:
         """

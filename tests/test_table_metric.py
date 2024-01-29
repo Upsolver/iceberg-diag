@@ -9,17 +9,19 @@ def test_int_metric_values():
     assert metric.get_after_value() == "10"
 
 
-@pytest.mark.parametrize("milliseconds_before, milliseconds_after, expected_before, expected_after", [
-    (5500, 4500, "5.5s", "4.5s"),
-    (9, 0, "<0.01s", "0s"),
-    (3600000, 7200000, "1h 0m 0s", "2h 0m 0s"),
-    (125000, 75000, "2m 5s", "1m 15s"),
-    (60000, 120000, "1m 0s", "2m 0s")
+@pytest.mark.parametrize("milliseconds_before, milliseconds_after, expected_before, expected_after, improvement", [
+    (5500, 4500, "5.5s", "4.5s", "18.18%"),
+    (9, 0, "<0.01s", "0s", "0.00%"),
+    (10, 1, "0.01s", "<0.01s", "90.00%"),
+    (3600000, 7200000, "1h 0m 0s", "2h 0m 0s", "-100.00%"),
+    (125000, 75000, "2m 5s", "1m 15s", "40.00%"),
+    (60000, 120000, "1m 0s", "2m 0s", "-100.00%")
 ])
-def test_duration_metric_values(milliseconds_before, milliseconds_after, expected_before, expected_after):
+def test_duration_metric_values(milliseconds_before, milliseconds_after, expected_before, expected_after, improvement):
     metric = DurationMetric(MetricName.FULL_SCAN_OVERHEAD, milliseconds_before, milliseconds_after)
     assert metric.get_before_value() == expected_before
     assert metric.get_after_value() == expected_after
+    assert metric.get_improvement_value() == improvement
 
 
 @pytest.mark.parametrize("bytes_before, bytes_after, expected_before, expected_after", [
