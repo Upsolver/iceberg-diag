@@ -45,9 +45,9 @@ def computed_metrics(scan):
 
 def test_file_count(computed_metrics):
     file_count_metric = next(m for m in computed_metrics if m.name == MetricName.FILE_COUNT)
-    assert file_count_metric.before == 910
+    assert file_count_metric.before == 900
     assert file_count_metric.after == 9
-    assert file_count_metric.improvement == 99.01098901098902
+    assert file_count_metric.improvement == 99.0
 
 
 def test_worst_file_count(computed_metrics):
@@ -73,7 +73,7 @@ def test_worst_scan_overhead(computed_metrics):
 
 def test_avg_file_size(computed_metrics):
     avg_file_size = next(m for m in computed_metrics if m.name == MetricName.AVG_FILE_SIZE)
-    assert avg_file_size.before == 12554104.967032967
+    assert avg_file_size.before == 12693595.022222223
 
 
 def test_total_table_size(computed_metrics):

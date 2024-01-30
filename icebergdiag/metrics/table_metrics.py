@@ -47,7 +47,6 @@ class MetricsCalculator:
     def compute_metrics(files: Iterable[DataFile], manifest_files_count: int) -> List[TableMetric]:
         """Computes various metrics for the table."""
         metrics = {name: 0 for name in MetricName}
-        metrics[MetricName.FILE_COUNT] = manifest_files_count
         metrics[MetricName.FULL_SCAN_OVERHEAD] = manifest_files_count * MILLISECONDS_PER_SCAN
         partition_files = defaultdict(list)
         partition_metrics = defaultdict(PartitionMetrics)
