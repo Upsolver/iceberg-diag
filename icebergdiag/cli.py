@@ -13,7 +13,7 @@ from rich.table import Table as RichTable
 from icebergdiag.diagnostics.manager import IcebergDiagnosticsManager
 from icebergdiag.diagnostics.requester import DiagnosticsRequester
 from icebergdiag.diagnostics.response import DiagnosticsResponse
-from icebergdiag.exceptions import TableMetricsCalculationError, IcebergDiagnosticsError
+from icebergdiag.exceptions import TableMetricsCalculationError, IcebergDiagnosticsError, RequestHandlingError
 from icebergdiag.metrics.table import Table
 from icebergdiag.metrics.table_metrics import TableMetrics
 from icebergdiag.metrics.table_metrics_displayer import TableMetricsDisplayer, RunMode
@@ -116,12 +116,11 @@ def process_tables(
         with ThreadPoolExecutor(max_workers=10) as executor:
             task = progress.add_task("[cyan]Processing...", total=len(tables))
             futures = {executor.submit(metric_function, table): table for table in tables}
-
             for future in as_completed(futures):
                 try:
                     table_result = future.result()
                     result_handler(displayer, table_result, failed_tables)
-                except TableMetricsCalculationError as e:
+                except (TableMetricsCalculationError, RequestHandlingError) as e:
                     failed_tables.append((futures[future], str(e)))
 
                 progress.update(task, advance=1)

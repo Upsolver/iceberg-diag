@@ -68,5 +68,8 @@ class RequestHandlingError(IcebergDiagnosticsError):
     """Exception raised for errors during remote diagnostics request."""
 
     def __init__(self, table_names: List[str], error: requests.RequestException):
-        message = f'An error occurred during the request for tables {table_names}: {error}'
+        if isinstance(error, requests.HTTPError):
+            message = str(error).split(" for url:")[0]
+        else:
+            message = f'An error occurred during the request for tables {table_names}: {error.__class__.__name__}'
         super().__init__(message)
