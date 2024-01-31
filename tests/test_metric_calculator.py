@@ -73,7 +73,7 @@ def test_worst_scan_overhead(computed_metrics):
 
 def test_avg_file_size(computed_metrics):
     avg_file_size = next(m for m in computed_metrics if m.name == MetricName.AVG_FILE_SIZE)
-    assert avg_file_size.before == 12693595.022222223
+    assert avg_file_size.before == 18856891.733333334
 
 
 def test_total_table_size(computed_metrics):

@@ -50,6 +50,8 @@ class MetricsCalculator:
         metrics[MetricName.FULL_SCAN_OVERHEAD] = manifest_files_count * MILLISECONDS_PER_SCAN
         partition_files = defaultdict(list)
         partition_metrics = defaultdict(PartitionMetrics)
+        total_data_files_count = 0
+        total_data_files_size = 0
 
         for file in files:
             partition = MetricsCalculator.deterministic_repr(file.partition)
@@ -61,6 +63,10 @@ class MetricsCalculator:
             metrics[MetricName.TOTAL_TABLE_SIZE] += file_size
             metrics[MetricName.FULL_SCAN_OVERHEAD] += overhead
 
+            if file.content == DataFileContent.DATA:
+                total_data_files_count += 1
+                total_data_files_size += file_size
+
             partition_metric = partition_metrics[partition]
             partition_metric.file_count += 1
             partition_metric.total_size += file_size
@@ -68,7 +74,10 @@ class MetricsCalculator:
             partition_files[partition].append(file)
 
         metrics[MetricName.TOTAL_PARTITIONS] = len(partition_metrics.keys())
-        metrics = MetricsCalculator._update_avg_and_worst_metrics(metrics, partition_metrics)
+        metrics = MetricsCalculator._update_avg_and_worst_metrics(total_data_files_count,
+                                                                  total_data_files_size,
+                                                                  metrics, partition_metrics)
+
         after_metrics, worst = MetricsCalculator._compute_after_and_worst_metrics(partition_files, partition_metrics)
         all_metrics = {**metrics, **worst}
 
@@ -83,15 +92,15 @@ class MetricsCalculator:
 
     @staticmethod
     def _update_avg_and_worst_metrics(
+            data_files_count: int,
+            data_files_size: int,
             metrics: Dict[MetricName, int],
             partition_metrics: Dict[str, PartitionMetrics]
     ) -> Dict[MetricName, int]:
         """
         Updates metrics with average and worst-case values based on the consolidated partition data.
         """
-        total_files = metrics[MetricName.FILE_COUNT]
-        metrics[MetricName.AVG_FILE_SIZE] = (metrics[MetricName.TOTAL_TABLE_SIZE] / total_files) if total_files else 0
-
+        metrics[MetricName.AVG_FILE_SIZE] = (data_files_size / data_files_count) if data_files_count else 0
         metrics[MetricName.WORST_AVG_FILE_SIZE] = min(
             (p.average_file_size() for p in partition_metrics.values() if not p.is_empty()), default=0)
         metrics[MetricName.LARGEST_PARTITION_SIZE] = max((p.total_size for p in partition_metrics.values()), default=0)

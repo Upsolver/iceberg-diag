@@ -11,8 +11,13 @@ def format_metrics(prefix: str, *metrics: str) -> Tuple[str, ...]:
     return tuple(f"{prefix}.{metric}" for metric in metrics)
 
 
-FILES_COUNT_METRICS = ["totalFilesCount", "targetFilesCount"]
-SIZE_METRICS = ["totalSizeBytes", "targetSizeBytes"]
+TARGET_FILE_COUNT = "targetFilesCount"
+TARGET_SIZE = "targetSizeBytes"
+FILES_COUNT_METRICS = ["totalFilesCount", TARGET_FILE_COUNT]
+DATA_FILE_COUNT = 'totalDataFileCount'
+DATA_FILE_SIZE = 'totalDataFileSizeBytes'
+SIZE_METRICS = ["totalSizeBytes", TARGET_SIZE]
+AVG_METRICS = [DATA_FILE_COUNT, TARGET_FILE_COUNT, DATA_FILE_SIZE, TARGET_SIZE]
 SCAN_METRICS = ["currentScanOverheadMillis", "targetScanOverheadMillis"]
 DIAGNOSTICS_METRICS_MAP = {
     MetricName.FULL_SCAN_OVERHEAD:
@@ -51,8 +56,8 @@ def calculate_average_metric(metric: MetricName,
 
     AvgMetrics = namedtuple('AvgMetrics', ['before_count', 'after_count', 'before_size', 'after_size'])
 
-    relevant_metrics = format_metrics(metric_path_prefix, *FILES_COUNT_METRICS, *SIZE_METRICS)
-    extracted_metrics = AvgMetrics(*[data[metric_path] for metric_path in relevant_metrics])
+    formatted_metrics = format_metrics(metric_path_prefix, *AVG_METRICS)
+    extracted_metrics = AvgMetrics(*[data[metric_path] for metric_path in formatted_metrics])
 
     before_avg = calculate_average(extracted_metrics.before_count, extracted_metrics.before_size)
     after_avg = calculate_average(extracted_metrics.after_count, extracted_metrics.after_size)

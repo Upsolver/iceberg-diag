@@ -16,7 +16,9 @@ def test_request_metrics(mocker):
                             "targetScanOverheadMillis": 14785,
                             "totalFilesCount": 970,
                             "targetFilesCount": 5,
-                            "totalPartitionsCount": 27
+                            "totalPartitionsCount": 27,
+                            "totalDataFileCount": 950,
+                            "totalDataFileSizeBytes": 447765480000
                         },
                     "largestPartition":
                         {
@@ -56,6 +58,8 @@ def test_request_metrics(mocker):
                             "currentScanOverheadMillis": 516,
                             "targetScanOverheadMillis": 514,
                             "totalFilesCount": 34,
+                            "totalDataFileCount": 33,
+                            "totalDataFileSizeBytes": 15661932440,
                             "targetFilesCount": 3
                         }
                 }
@@ -78,8 +82,8 @@ def test_request_metrics(mocker):
             DurationMetric(MetricName.WORST_SCAN_OVERHEAD, 516, 514, True, True),
             IntMetric(MetricName.FILE_COUNT, 970, 5, True, True),
             IntMetric(MetricName.WORST_FILE_COUNT, 52, 1, True, True),
-            SizeMetric(MetricName.AVG_FILE_SIZE, 461613901.1257732, 100000000.0, True, False),
-            SizeMetric(MetricName.WORST_AVG_FILE_SIZE, 460645072.0, 5220644149.333333, False, False ),
+            SizeMetric(MetricName.AVG_FILE_SIZE, 471332084.2105263, 100000000.0, True, False),
+            SizeMetric(MetricName.WORST_AVG_FILE_SIZE, 474604013.3333333, 5220644149.333333, False, False),
             SizeMetric(MetricName.TOTAL_TABLE_SIZE, 447765484092, 500000000, True, True),
             SizeMetric(MetricName.LARGEST_PARTITION_SIZE, 24449273386, 24449273386, True, True),
             IntMetric(MetricName.TOTAL_PARTITIONS, 27, None, True, True)
