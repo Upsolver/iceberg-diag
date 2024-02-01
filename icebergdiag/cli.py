@@ -135,7 +135,7 @@ def generate_table_metrics(diagnostics_manager: IcebergDiagnosticsManager, datab
     def metric_function(table: Table) -> TableMetrics:
         return diagnostics_manager.calculate_metrics(table)
 
-    def result_handler(displayer: TableMetricsDisplayer, table_result: Any, _) -> None:
+    def result_handler(displayer: TableMetricsDisplayer, table_result: TableMetrics, _) -> None:
         displayer.display_table_metrics(table_result, RunMode.LOCAL)
 
     process_tables(diagnostics_manager, database, table_pattern, metric_function, result_handler)
@@ -155,7 +155,7 @@ def request_table_metrics(diagnostics_manager: IcebergDiagnosticsManager,
     def metric_function(table: Table) -> DiagnosticsResponse:
         return func([table])
 
-    def result_handler(displayer: TableMetricsDisplayer, table_result: Any,
+    def result_handler(displayer: TableMetricsDisplayer, table_result: DiagnosticsResponse,
                        failed_tables: List[Tuple[Table, str]]) -> None:
         displayer.display_metrics(table_result.metrics, RunMode.REMOTE)
         failed_tables.extend(table_result.extract_errors())

@@ -40,9 +40,9 @@ class DiagnosticsResponse:
         self.metrics = metrics
         self.errors = errors
 
-    def extract_errors(self) -> List[Tuple[str, str]]:
+    def extract_errors(self) -> List[Tuple[Table, str]]:
         return [
-            (error.get("table", ""), error.get("error", "Unknown Error"))
+            (Table.from_full_name(error.get("table", "")), error.get("error", "Unknown Error"))
             for error in self.errors
             if error.get("table")
         ]

@@ -3,6 +3,15 @@ class Table:
         self.database = database
         self.table_name = table_name
 
+    @classmethod
+    def from_full_name(cls, full_table_name: str):
+        parts = full_table_name.strip().split('.', maxsplit=1)
+
+        if len(parts) == 2:
+            return cls(*parts)
+        else:
+            return cls('', full_table_name)
+
     def __eq__(self, other):
         return self.database == other.database and self.table_name == other.table_name
 
