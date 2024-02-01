@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import requests
 
@@ -22,8 +22,9 @@ class ProfileNotFoundError(IcebergDiagnosticsError):
 class SSOAuthenticationError(IcebergDiagnosticsError):
     """Exception raised when the SSO session is expired or invalid."""
 
-    def __init__(self, profile: str, original_exception: Exception):
-        message = f"There was an issue with the SSO for profile '{profile}': {original_exception}"
+    def __init__(self, profile: Optional[str], original_exception: Exception):
+        message = f"There was an issue with the SSO for profile '{profile}': {original_exception}" if profile else str(
+            original_exception)
         super().__init__(message)
 
 

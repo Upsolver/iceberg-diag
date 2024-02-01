@@ -1,82 +1,85 @@
-# Iceberg Diagnostics Tool (iceberg-diag)
+# Iceberg Diagnostics Tool
 
 ## Overview
 
-The Iceberg Diagnostics Tool, `iceberg-diag`, is a CLI tool designed for diagnostic purposes related to Iceberg tables. 
+The Iceberg Table Analysis CLI Tool evaluates Iceberg tables to identify how Upsolver optimizations can enhance efficiency.   
+It presents a side-by-side comparison of current metrics against potential improvements in scan durations, file counts, and file sizes, providing a straightforward assessment of optimization opportunities.
 
-## Prerequisites
-
-Check if Python 3.8 or higher is installed:
-```bash
-python3 --version
-```
-Check if Rust is installed:
-```bash
-cargo --version
-```
-If Rust is not installed, install it using:
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
 
 ## Installation
-
+`iceberg-diag` can be installed using either Brew or PIP, as detailed below:
 
 ### Using Brew
+Execute the following commands to install `iceberg-diag` via Brew:
+
  ```bash
  brew tap upsolver/iceberg-diag
  brew install iceberg-diag
  ```
 
 ### Using PIP
-Before installing, ensure you are using `pip` version `23.1` or newer for the best compatibility and performance.
+#### Prerequisites
+
+* **Python 3.8 or higher**: Verify Python's installation:
+   ```bash
+   python3 --version
+   ```
+* **Rust**: check if installed:
+   ```bash
+   cargo --version
+   ```
+   If Rust is not installed, install it using:
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
+
+To install `iceberg-diag` using PIP, ensure you have the latest version of `pip`:
+
 ```bash
-pip --version  # Check your current pip version
-pip install --upgrade pip  # Upgrade pip to the latest version if necessary
+pip install --upgrade pip
 ```
-Install the package with `pip`
+Then, install the package with `pip`
 ```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple iceberg-diag
+pip install iceberg-diag
 ```
 
+## Usage Instructions
 
-## Setup Project (dev)
-
-
-1. Clone the repository from GitHub.
-2. Navigate to the project directory.
-3. Install dependencies using poetry:
-
-```bash
-poetry install
-```
-
-
-## Usage
-If you are running with Poetry, use `poetry run` as prefix before any command,
-If the CLI is installed, you can use the commands as is.
 ```bash
 iceberg-diag [options]
-# for poetry:
-poetry run iceberg-diag [options]
 ```
 
-### Options
+### Command-Line Options
 
 - `-h`, `--help`: Display the help message and exit.
-- `--profile PROFILE`: Specify the AWS profile name.
-- `--region REGION`: Define the AWS region.
-- `--database DATABASE`: Set the database name.
+- `--profile PROFILE`: Set the AWS credentials profile for the session, defaults to the environment's current settings.
+- `--region REGION`: Set the AWS region for operations, defaults to the specified profile's default region.
+- `--database DATABASE`: Set the database name, will list all available iceberg tables if no `--table-name` provided.
 - `--table-name TABLE_NAME`: Enter the table name or a glob pattern (e.g., `'*'`, `'tbl_*'`).
-- `--remote`: Enable remote diagnostics.
-- `--no-tracking`: Disable tracking functionality. (Note: This option is currently not supported)
+- `--remote`: Enable remote diagnostics by sending data to the Upsolver API for processing.   
+Provides more detailed analytics and includes information about file size reducations.
 
-### Examples
+### Usage
 1. Displaying help information:
     ```bash
      iceberg-diag --help
     ```
-2. Running diagnostics on a specific table in a specific AWS profile and region:
+   
+2. Listing all available databases in profile:
+    ```bash
+   iceberg-diag --profile <profile>
+    ```
+   
+3. Listing all available iceberg tables in a given database:
+    ```bash
+   iceberg-diag --profile <profile> --database <database>
+    ```
+4. Running diagnostics on a specific table in a specific AWS profile and region (completely locally):
    ```bash
-    iceberg-diag --profile default --region us-east-1 --database my_db --table-name '*'
+    iceberg-diag --profile <profile> --region <region> --database <database> --table-name '*'
+    ```
+   
+5. Running diagnostics using `remote` option
+    ```bash
+   iceberg-diag --profile <profile> --database <database> --table-name 'prod_*' --remote
     ```
