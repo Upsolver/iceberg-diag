@@ -1,6 +1,8 @@
+from concurrent.futures import ThreadPoolExecutor, Executor
 from enum import Enum
-from typing import Any, Dict
 from functools import total_ordering
+from typing import Any, Dict
+from typing import Optional
 
 
 class NestedDictAccessor:
@@ -11,6 +13,7 @@ class NestedDictAccessor:
     with elements separated by dots, representing the nesting levels in the dictionary.
     e.g. dict['a.b.c'] == dict['a']['b']['c']
     """
+
     def __init__(self, data: Dict[str, Any]):
         self.data = data
 
@@ -60,3 +63,14 @@ class OrderedEnum(Enum):
 
     def __hash__(self):
         return hash(self._custom_value)
+
+
+class ExecutorFactory:
+    _instance: Optional[Executor] = None
+
+    @classmethod
+    def get_or_create(cls) -> Executor:
+        """Return the same executor in each call."""
+        if cls._instance is None:
+            cls._instance = ThreadPoolExecutor()
+        return cls._instance

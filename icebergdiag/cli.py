@@ -4,12 +4,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import partial
 from typing import List, Callable, Any, Tuple
 
-from rich import box
-from rich.console import Console
-from rich.logging import RichHandler
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, MofNCompleteColumn
-from rich.table import Table as RichTable
-
 from icebergdiag.diagnostics.manager import IcebergDiagnosticsManager
 from icebergdiag.diagnostics.requester import DiagnosticsRequester
 from icebergdiag.diagnostics.response import DiagnosticsResponse
@@ -17,6 +11,11 @@ from icebergdiag.exceptions import TableMetricsCalculationError, IcebergDiagnost
 from icebergdiag.metrics.table import Table
 from icebergdiag.metrics.table_metrics import TableMetrics
 from icebergdiag.metrics.table_metrics_displayer import TableMetricsDisplayer, RunMode
+from rich import box
+from rich.console import Console
+from rich.logging import RichHandler
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, MofNCompleteColumn
+from rich.table import Table as RichTable
 
 logging.basicConfig(
     level="ERROR",

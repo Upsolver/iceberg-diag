@@ -6,17 +6,17 @@ import boto3
 import botocore.exceptions as boto3_exceptions
 from botocore.client import BaseClient
 from botocore.config import Config
-from pyiceberg.catalog import load_glue, Catalog
+from icebergdiag.exceptions import ProfileNotFoundError, EndpointConnectionError, \
+    IcebergDiagnosticsError, DatabaseNotFound, TableMetricsCalculationError, SSOAuthenticationError
+from icebergdiag.iceberg.table_loader import TableLoader
+from icebergdiag.metrics.table import Table
+from icebergdiag.metrics.table_metrics import TableMetrics, MetricsCalculator
+from icebergdiag.utils import ExecutorFactory
+from pyiceberg.catalog import Catalog
 from pyiceberg.catalog.glue import GlueCatalog
 from pyiceberg.io import PY_IO_IMPL, FSSPEC_FILE_IO
 from pyiceberg.manifest import DataFile
 from pyiceberg.table import Table as IcebergTable, _open_manifest
-from pyiceberg.utils.concurrent import ExecutorFactory
-
-from icebergdiag.exceptions import ProfileNotFoundError, EndpointConnectionError, \
-    IcebergDiagnosticsError, DatabaseNotFound, TableMetricsCalculationError, SSOAuthenticationError
-from icebergdiag.metrics.table import Table
-from icebergdiag.metrics.table_metrics import TableMetrics, MetricsCalculator
 
 CATALOG_CONFIG = {PY_IO_IMPL: FSSPEC_FILE_IO}
 
@@ -26,12 +26,13 @@ class IcebergDiagnosticsManager:
         self.profile = profile
         self.region = region
         self._initialize_catalog()
+        self.table_loader = TableLoader(self.catalog)
 
     def _initialize_catalog(self):
         try:
             self._validate()
-            self.catalog = load_glue(name="glue",
-                                     conf={"profile_name": self.profile, "region_name": self.region, **CATALOG_CONFIG})
+            conf = {"profile_name": self.profile, "region_name": self.region, **CATALOG_CONFIG}
+            self.catalog = GlueCatalog("glue", **conf)
             self.glue_client = IcebergDiagnosticsManager._get_glue_client(self.catalog)
             self.session = boto3.Session(profile_name=self.profile, region_name=self.region)
         except boto3_exceptions.ProfileNotFound:
@@ -117,16 +118,18 @@ class IcebergDiagnosticsManager:
 
 
 class TableDiagnostics:
-    def __init__(self, catalog: Catalog, table: Table):
+
+    def __init__(self, catalog: GlueCatalog, table: Table):
         self.table = table
         self.catalog = catalog
+        self.loader = TableLoader(self.catalog)
 
     def get_metrics(self) -> TableMetrics:
         metrics = MetricsCalculator.compute_metrics(*self._get_manifest_files())
         return TableMetrics(self.table, metrics)
 
     def _load_table(self) -> IcebergTable:
-        return self.catalog.load_table(self.table.full_table_name())
+        return self.loader.load_table(self.table)
 
     def _get_manifest_files(self) -> Tuple[Iterable[DataFile], int]:
         """Returns a list of all data files in manifest entries.
