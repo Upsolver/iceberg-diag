@@ -53,17 +53,17 @@ def display_list(lst: List[str], heading: str) -> None:
 
 
 def list_tables(diagnostics_manager: IcebergDiagnosticsManager, database: str) -> None:
-    tables = diagnostics_manager.list_tables(database)
+    tables = run_with_progress(diagnostics_manager.list_tables, "Fetching Iceberg tables...", database)
     display_list(tables, "Tables")
     error_message = (
-        "Use --table-name to get diagnostics on the iceberg table, "
+        "Use --table-name to get diagnostics on the Iceberg table, "
         "you can use a glob pattern to receive diagnostics on multiple tables in one command"
     )
     stderr_print(error_message)
 
 
 def list_databases(diagnostics_manager: IcebergDiagnosticsManager) -> None:
-    databases = diagnostics_manager.list_databases()
+    databases = run_with_progress(diagnostics_manager.list_databases, "Fetching databases...")
     display_list(databases, "Databases")
     stderr_print("Use --database to get the list of tables")
 

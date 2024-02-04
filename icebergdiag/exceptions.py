@@ -15,8 +15,9 @@ class IcebergDiagnosticsError(Exception):
 class ProfileNotFoundError(IcebergDiagnosticsError):
     """Exception raised when the specified AWS profile does not exist."""
 
-    def __init__(self, profile: str):
-        super().__init__(f"The AWS profile '{profile}' does not exist.")
+    def __init__(self, profile: Optional[str]):
+        profile_msg = f"The AWS profile '{profile}' does not exist." if profile is not None else "No AWS profile found."
+        super().__init__(profile_msg)
 
 
 class SSOAuthenticationError(IcebergDiagnosticsError):
@@ -38,8 +39,17 @@ class NoRegionError(IcebergDiagnosticsError):
 class EndpointConnectionError(IcebergDiagnosticsError):
     """Exception raised when connection to AWS endpoint fails."""
 
-    def __init__(self, region: str):
-        super().__init__(f"Could not connect to AWS in the region '{region}'.")
+    def __init__(self, region: Optional[str]):
+        region_message = f"region '{region}'" if region is not None else "default region"
+        super().__init__(f"Could not connect to AWS in the {region_message}.")
+
+
+class SessionInitializationError(IcebergDiagnosticsError):
+    """Exception raised when an AWS session fails to initialize."""
+    def __init__(self, profile: Optional[str], original_error: Exception):
+        profile_part = f"with profile '{profile}'" if profile else "with default profile"
+        message = f"Failed to initialize AWS session {profile_part}: {original_error}"
+        super().__init__(message)
 
 
 class UnexpectedError(IcebergDiagnosticsError):

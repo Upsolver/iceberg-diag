@@ -9,14 +9,6 @@ It presents a side-by-side comparison of current metrics against potential impro
 ## Installation
 `iceberg-diag` can be installed using either Brew or PIP, as detailed below:
 
-### Using Brew
-Execute the following commands to install `iceberg-diag` via Brew:
-
- ```bash
- brew tap upsolver/iceberg-diag
- brew install iceberg-diag
- ```
-
 ### Using PIP
 #### Prerequisites
 
@@ -24,15 +16,6 @@ Execute the following commands to install `iceberg-diag` via Brew:
    ```bash
    python3 --version
    ```
-* **Rust**: check if installed:
-   ```bash
-   cargo --version
-   ```
-   If Rust is not installed, install it using:
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
-
 To install `iceberg-diag` using PIP, ensure you have the latest version of `pip`:
 
 ```bash
@@ -42,6 +25,16 @@ Then, install the package with `pip`
 ```bash
 pip install iceberg-diag
 ```
+
+
+### Using Brew
+Execute the following commands to install `iceberg-diag` via Brew:
+
+ ```bash
+ brew tap upsolver/iceberg-diag
+ brew install iceberg-diag
+ ```
+
 
 ## Usage Instructions
 

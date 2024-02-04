@@ -1,10 +1,12 @@
 [tool.poetry]
 name = "iceberg-diag"
-version = "0.1.0"
+version = "0.1.1"
 description = "Upsolver Iceberg Auditor CLI"
 authors = ["Upsolver <developers@upsolver.com>"]
 license = "MIT"
 readme = "README.md"
+homepage = "https://github.com/Upsolver/iceberg-diag"
+
 
 packages = [
     {include = "icebergdiag"},
