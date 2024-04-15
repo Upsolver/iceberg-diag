@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "iceberg-diag"
-version = "0.1.2"
+version = "0.1.3"
 description = "Upsolver Iceberg Auditor CLI"
 authors = ["Upsolver <developers@upsolver.com>"]
 license = "MIT"

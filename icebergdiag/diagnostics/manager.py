@@ -91,7 +91,7 @@ class IcebergDiagnosticsManager:
         try:
             return TableDiagnostics(self.catalog, table).get_metrics()
         except Exception as e:
-            logger.debug(f"Failed to Calculate metrics: {"".join(traceback.format_exception(e))}")
+            logger.debug(f"Failed to Calculate metrics: {''.join(traceback.format_exception(e))}")
             raise TableMetricsCalculationError(table, e)
 
     def _fetch_and_filter_tables(self, database: str) -> List[str]:
