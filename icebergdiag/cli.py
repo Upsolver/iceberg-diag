@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import partial
 from typing import List, Callable, Any, Tuple
@@ -18,11 +19,22 @@ from icebergdiag.metrics.table import Table
 from icebergdiag.metrics.table_metrics import TableMetrics
 from icebergdiag.metrics.table_metrics_displayer import TableMetricsDisplayer, RunMode
 
-logging.basicConfig(
-    level="ERROR",
-    format="%(message)s",
-    handlers=[RichHandler(rich_tracebacks=False, show_path=False)]
-)
+
+def configure_logging(verbose=False):
+    logging.basicConfig(
+        level="ERROR",
+        format="%(message)s",
+        handlers=[RichHandler(rich_tracebacks=True, show_path=False)]
+    )
+    if verbose:
+        logging.getLogger().setLevel(logging.INFO)
+        os.environ['S3FS_LOGGING_LEVEL'] = 'DEBUG'
+        debug_loggers = ['icebergdiag', 'pyiceberg']
+        for logger_name in debug_loggers:
+            logging.getLogger(logger_name).setLevel(logging.DEBUG)
+
+
+logger = logging.getLogger(__name__)
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -34,6 +46,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument('--database', type=str, help='Database name')
     parser.add_argument('--table-name', type=str, help="Table name or glob pattern (e.g., '*', 'tbl_*')")
     parser.add_argument('--remote', action='store_true', help='Use remote diagnostics')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Enable debug logs')
     return parser.parse_args()
 
 
@@ -163,8 +176,8 @@ def request_table_metrics(diagnostics_manager: IcebergDiagnosticsManager,
 
 
 def cli_runner() -> None:
-    logger = logging.getLogger(__name__)
     args = parse_arguments()
+    configure_logging(args.verbose)
     try:
         diagnostics_manager = run_with_progress(IcebergDiagnosticsManager, "Initializing...",
                                                 profile=args.profile, region=args.region)
