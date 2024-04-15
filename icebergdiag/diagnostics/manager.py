@@ -37,11 +37,21 @@ class IcebergDiagnosticsManager:
         logger.debug("Starting catalog initialization")
         try:
             self._validate()
-            self.catalog = load_glue(name="glue",
-                                     conf={"profile_name": self.profile, "region_name": self.region, **CATALOG_CONFIG})
-            self.glue_client = IcebergDiagnosticsManager._get_glue_client(self.catalog)
             self.session = boto3.Session(profile_name=self.profile, region_name=self.region)
-            logger.debug("Catalog initialized successfully")
+            credentials = self.session.get_credentials().get_frozen_credentials()
+            self.catalog = load_glue(name="glue",
+                                     conf={"profile_name": self.profile,
+                                           "region_name": self.session.region_name,
+                                           "aws_access_key_id": credentials.access_key,
+                                           "aws_secret_access_key": credentials.secret_key,
+                                           "aws_session_token": credentials.token,
+                                           "s3.access-key-id": credentials.access_key,
+                                           "s3.secret-access-key": credentials.secret_key,
+                                           "s3.session-token": credentials.token,
+                                           "s3.region": self.session.region_name,
+                                           **CATALOG_CONFIG})
+            self.glue_client = IcebergDiagnosticsManager._get_glue_client(self.catalog)
+            logger.debug("Glue Catalog initialized successfully")
         except boto3_exceptions.ProfileNotFound:
             raise ProfileNotFoundError(self.profile)
         except boto3_exceptions.EndpointConnectionError:
