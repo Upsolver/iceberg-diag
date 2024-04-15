@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 import requests
 
@@ -46,6 +46,7 @@ class EndpointConnectionError(IcebergDiagnosticsError):
 
 class SessionInitializationError(IcebergDiagnosticsError):
     """Exception raised when an AWS session fails to initialize."""
+
     def __init__(self, profile: Optional[str], original_error: Exception):
         profile_part = f"with profile '{profile}'" if profile else "with default profile"
         message = f"Failed to initialize AWS session {profile_part}: {original_error}"
@@ -84,3 +85,8 @@ class RequestHandlingError(IcebergDiagnosticsError):
         else:
             message = f'An error occurred during the request for tables {table_names}: {error.__class__.__name__}'
         super().__init__(message)
+
+
+class ParsingResponseError(IcebergDiagnosticsError):
+    def __init__(self, data: Dict[str, Any], table_names: List[str], error: Exception):
+        super().__init__(f"Failed to parse diagnostics response {data} for tables: {table_names}: {error}")

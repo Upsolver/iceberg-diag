@@ -51,6 +51,7 @@ iceberg-diag [options]
 - `--table-name TABLE_NAME`: Enter the table name or a glob pattern (e.g., `'*'`, `'tbl_*'`).
 - `--remote`: Enable remote diagnostics by sending data to the Upsolver API for processing.   
 Provides more detailed analytics and includes information about file size reducations.
+- `-v, --verbose`: Enable verbose logging
 
 ### Usage
 1. Displaying help information:
