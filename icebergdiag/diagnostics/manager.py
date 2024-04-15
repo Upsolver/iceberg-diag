@@ -10,7 +10,6 @@ from botocore.client import BaseClient
 from botocore.config import Config
 from pyiceberg.catalog import load_glue, Catalog
 from pyiceberg.catalog.glue import GlueCatalog
-from pyiceberg.io import PY_IO_IMPL, FSSPEC_FILE_IO
 from pyiceberg.manifest import DataFile
 from pyiceberg.table import Table as IcebergTable, _open_manifest
 from pyiceberg.utils.concurrent import ExecutorFactory
@@ -20,8 +19,6 @@ from icebergdiag.exceptions import ProfileNotFoundError, EndpointConnectionError
     SessionInitializationError
 from icebergdiag.metrics.table import Table
 from icebergdiag.metrics.table_metrics import TableMetrics, MetricsCalculator
-
-CATALOG_CONFIG = {PY_IO_IMPL: FSSPEC_FILE_IO}
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +46,7 @@ class IcebergDiagnosticsManager:
                                            "s3.secret-access-key": credentials.secret_key,
                                            "s3.session-token": credentials.token,
                                            "s3.region": self.session.region_name,
-                                           **CATALOG_CONFIG})
+                                           })
             self.glue_client = IcebergDiagnosticsManager._get_glue_client(self.catalog)
             logger.debug("Glue Catalog initialized successfully")
         except boto3_exceptions.ProfileNotFound:
