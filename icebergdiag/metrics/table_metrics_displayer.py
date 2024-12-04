@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import List
 
 from rich.console import Console
 from rich.panel import Panel
@@ -18,7 +19,7 @@ class TableMetricsDisplayer:
     def __init__(self, console: Console):
         self.console = console
 
-    def display_metrics(self, tables: list[TableMetrics], mode: RunMode) -> None:
+    def display_metrics(self, tables: List[TableMetrics], mode: RunMode) -> None:
         for table in tables:
             self.display_table_metrics(table, mode)
 
