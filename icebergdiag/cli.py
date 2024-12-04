@@ -99,7 +99,7 @@ def print_table_count_message(table_count, table_pattern):
         console.print(f"[green]Analyzing {table_count} {table_word}, {wait_message}[/green]\n")
 
 
-def fetch_tables(diagnostics_manager: IcebergDiagnosticsManager, database: str, table_pattern: str) -> list[str]:
+def fetch_tables(diagnostics_manager: IcebergDiagnosticsManager, database: str, table_pattern: str) -> List[str]:
     tables = run_with_progress(diagnostics_manager.get_matching_tables, "Fetching tables...",
                                database, table_pattern)
     print_table_count_message(len(tables), table_pattern)
